@@ -21,7 +21,7 @@ export const addParkingLocationController = asyncHandler(
       throw new ErrorResponse("Please provide name and address", 400);
     }
     // Add logic to save parking location to the database
-    const parkingLocation = await prisma.parkingLocation.create({
+    await prisma.parkingLocation.create({
       data: {
         name,
         address,
@@ -57,6 +57,41 @@ export const getAllParkingLocationsController = asyncHandler(
       success: true,
       statusCode: 200,
       data: parkingLocations,
+    });
+  }
+);
+
+// @desck    Update Parking Location
+// @route    PUT /api/admin/parking/:id
+// @access   Private (Admin)
+export const updateParkingLocationController = asyncHandler(
+  async (
+    req: IRequest,
+    res: Response<ResponseFormat>,
+    next: NextFunction
+  ): Promise<void> => {
+    const { id } = req.params;
+    const parkingLocation = await prisma.parkingLocation.findUnique({
+      where: { id },
+    });
+    if (!parkingLocation) {
+      throw new ErrorResponse("Parking location not found", 404);
+    }
+    const { name, address } = req.body;
+    if (!name && !address) {
+      throw new ErrorResponse("Please provide name or address to update", 400);
+    }
+    const updatedData: any = { updatedAt: new Date() };
+    if (name) updatedData.name = name;
+    if (address) updatedData.address = address;
+    await prisma.parkingLocation.update({
+      where: { id },
+      data: updatedData,
+    });
+    res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: "Parking location updated successfully",
     });
   }
 );

@@ -3,6 +3,7 @@ import {
   addParkingLocationController,
   getAllParkingLocationsController,
   deleteParkingLocationController,
+  updateParkingLocationController,
 } from "../../controllers/admin/parking.controllers";
 import { protect, authorize } from "../../middlewares/authMiddleware";
 
@@ -17,5 +18,8 @@ parkingRouter
 parkingRouter
   .route("/:id")
   .delete(protect, authorize("Admin"), deleteParkingLocationController);
+parkingRouter
+  .route("/:id")
+  .put(protect, authorize("Admin"), updateParkingLocationController);
 
 export default parkingRouter;
