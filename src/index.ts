@@ -25,11 +25,13 @@ app.use(cookieParser());
 import authRoutes from "./routes/auth/auth.route";
 import parkingRoutes from "./routes/admin/parking.routes";
 import parkingBlocksRoutes from "./routes/admin/parking-blocks.routes";
+import userParkingRoutes from "./routes/user/Uparking.routes";
 
 // Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/parking", parkingRoutes);
 app.use("/api/admin/parking/blocks", parkingBlocksRoutes);
+app.use("/api/user", userParkingRoutes);
 
 // Handle errors
 app.use(errorHandler);
