@@ -18,6 +18,8 @@ export const protect = async (
 
   if (authHeader?.startsWith("Bearer")) {
     token = authHeader.split(" ")[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
   }
 
   //   Make sure token exists

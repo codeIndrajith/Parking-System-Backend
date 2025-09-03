@@ -20,6 +20,7 @@ model User {
 
   // Relations
   vehicles       Vehicle[]
+  parkingLocation ParkingLocation[]
 }
 
 
@@ -33,6 +34,30 @@ model Vehicle {
   color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ParkingLocation {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  createdBy String
+  admin     User     @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks    Block[]
+}
+
+model Block {
+  id                 String   @id @default(uuid())
+  locationId         String
+  parkingLocation    ParkingLocation @relation(fields: [locationId], references: [id])
+  blockName          String
+  totalSlots         Int
+  availableSlots     Int
+  isFull             Boolean   @default(false) 
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 

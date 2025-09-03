@@ -1,4 +1,4 @@
-import e from "express";
+import { Request } from "express";
 import { Role } from "../generated/prisma";
 
 export interface Vehicle {
@@ -44,6 +44,6 @@ export interface RegisterRequestBody {
   vehicles?: Omit<Vehicle, "id">[];
 }
 
-export interface AuthRequest extends e.Request {
+export interface AuthRequest extends Request {
   body: LoginRequestBody | RegisterRequestBody;
 }

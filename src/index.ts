@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 import { connectDB } from "./config/database";
@@ -17,11 +18,16 @@ connectDB();
 // Enable CORS for all routes
 app.use(cors());
 
+// Cookie parser
+app.use(cookieParser());
+
 // Import routes
 import authRoutes from "./routes/auth/auth.route";
+import parkingRoutes from "./routes/admin/parking.routes";
 
 // Mount routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin/parking", parkingRoutes);
 
 // Handle errors
 app.use(errorHandler);
