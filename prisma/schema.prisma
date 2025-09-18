@@ -21,6 +21,7 @@ model User {
   // Relations
   vehicles       Vehicle[]
   parkingLocation ParkingLocation[]
+  bookings       Booking[]
 }
 
 
@@ -58,6 +59,28 @@ model Block {
   isFull             Boolean   @default(false) 
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  bookings            Booking[]
+}
+
+// Booking Records (works for both Online & Walk-in)
+model Booking {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  bookingType   BookingType?
+  status        BookingStatus @default(BOOK)
+  blockId       String
+  block         Block     @relation(fields: [blockId], references: [id])
+  date          String?
+  entryTime     String?
+  exitTime      String?
+  duration      Int?  
+  trackTime     Int?    
+  amount        Float?   
+  paymentStatus PaymentStatus @default(UNPAID)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 
@@ -66,4 +89,22 @@ model Block {
 enum Role {
   Admin
   User
+}
+
+enum BookingType {
+  ONLINE
+  WALK_IN
+}
+
+enum BookingStatus {
+  BOOK
+  PAY    
+  CONFIRMED   
+  COMPLETED   
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
 }
