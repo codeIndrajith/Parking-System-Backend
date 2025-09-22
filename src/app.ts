@@ -21,6 +21,14 @@ app.use(cors());
 // Cookie parser
 app.use(cookieParser());
 
+app.get("/api", (req, res) => {
+  res.json({ message: "API is working!" });
+});
+
+app.get("/", (req, res) => {
+  res.json({ message: "Server is running!" });
+});
+
 // Import routes
 import authRoutes from "./routes/auth/auth.route";
 import parkingRoutes from "./routes/admin/parking.routes";
@@ -33,7 +41,6 @@ app.use("/api/admin/parking", parkingRoutes);
 app.use("/api/admin/parking/blocks", parkingBlocksRoutes);
 app.use("/api/user", userParkingRoutes);
 
-// Handle errors
 app.use(errorHandler);
 
 export default app;
