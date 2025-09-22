@@ -8,12 +8,13 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/src/index.ts"
-    },
-    {
       "src": "/(.*)",
       "dest": "/src/index.ts"
     }
-  ]
+  ],
+  "functions": {
+    "src/index.ts": {
+      "includeFiles": "dist/**"
+    }
+  }
 }
