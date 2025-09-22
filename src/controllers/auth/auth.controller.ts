@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHandler from "../../utils/asyncHandler";
-import { PrismaClient } from "../../generated/prisma";
 import { ErrorResponse } from "../../utils/errorResponse";
 import bcrypt from "bcryptjs";
 import { sendTokenResponse } from "../../utils/sendTokenResponse";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 

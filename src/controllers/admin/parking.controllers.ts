@@ -1,10 +1,9 @@
 import { NextFunction, Response } from "express";
 import { ErrorResponse } from "../../utils/errorResponse";
 import asyncHandler from "../../utils/asyncHandler";
-
-import { PrismaClient } from "../../generated/prisma";
 import { IRequest } from "../../types/auth.types";
 import { ResponseFormat } from "../../types/responseFormat";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // @desc     Add Parking Location

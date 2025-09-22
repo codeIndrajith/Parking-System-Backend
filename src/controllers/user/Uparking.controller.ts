@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler";
-import { PrismaClient } from "../../generated/prisma";
 import { ResponseFormat } from "../../types/responseFormat";
 import { IRequest } from "../../types/auth.types";
 import { ErrorResponse } from "../../utils/errorResponse";
 import { IBlockResponse } from "../../types/blocks";
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 // @desc    Get all parking
 // @route   GET /api/user/parkings
@@ -97,7 +97,7 @@ export const bookParking = asyncHandler(
       throw new ErrorResponse("Select a block for booking", 400);
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const block = await tx.block.findUnique({
         where: { id: blockId },
       });
@@ -157,7 +157,7 @@ export const payForBooking = asyncHandler(
   ): Promise<void> => {
     const { bookingId } = req.params;
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const bookingRecord = await tx.booking.findUnique({
         where: { id: bookingId },
       });

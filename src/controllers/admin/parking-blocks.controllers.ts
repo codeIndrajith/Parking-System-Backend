@@ -3,7 +3,7 @@ import asyncHandler from "../../utils/asyncHandler";
 import { IRequest } from "../../types/auth.types";
 import { ResponseFormat } from "../../types/responseFormat";
 import { ErrorResponse } from "../../utils/errorResponse";
-import { PrismaClient } from "../../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 const prisma: any = new PrismaClient();
 
 // @desc     Add Parking Blocks to a Parking Location

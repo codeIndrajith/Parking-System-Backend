@@ -1,8 +1,8 @@
 import { ErrorResponse } from "../utils/errorResponse";
 import { NextFunction, Response } from "express";
 import { verifyToken } from "../utils/generateToken";
-import { PrismaClient } from "../generated/prisma";
 import { IRequest } from "../types/auth.types";
+import { PrismaClient } from "@prisma/client";
 
 const prisma: any = new PrismaClient();
 
