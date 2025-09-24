@@ -13,8 +13,6 @@ const PORT = process.env.PORT || 4000;
 // Body parser
 app.use(express.json());
 
-connectDB();
-
 // Enable CORS for all routes
 app.use(cors());
 
