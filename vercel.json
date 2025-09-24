@@ -1,5 +1,5 @@
 {
-  "version": 2,
-  "buildCommand": "prisma generate && tsc",
-  "outputDirectory": "dist"
+  "version": 3,
+  "builds": [{ "src": "src/index.ts", "use": "@vercel/node" }],
+  "routes": [{ "src": "/api/(.*)", "dest": "/src/index.ts" }]
 }
