@@ -1,4 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "prisma generate && npm run build"
+  "buildCommand": "prisma generate && tsc",
+  "outputDirectory": "dist"
 }
