@@ -2,13 +2,14 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { connectDB } from "../src/config/database";
+import { errorHandler } from "./middlewares/errorMiddleware";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Body parser
 app.use(express.json());
 
 // Enable CORS for all routes
@@ -19,16 +20,10 @@ app.use(
   })
 );
 
-// Cookie parser
+// connectDB
+connectDB();
+
 app.use(cookieParser());
-
-app.get("/api", (req, res) => {
-  res.json({ message: "API is working!" });
-});
-
-app.get("/", (req, res) => {
-  res.json({ message: "Server is running!" });
-});
 
 // Import routes
 import authRoutes from "./routes/auth/auth.route";
@@ -42,16 +37,11 @@ app.use("/api/admin/parking", parkingRoutes);
 app.use("/api/admin/parking/blocks", parkingBlocksRoutes);
 app.use("/api/user", userParkingRoutes);
 
-// Error handler (make sure this is properly implemented)
-app.use((err: any, req: any, res: any, next: any) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
-});
+app.use(errorHandler);
 
-// Only start server if not in Vercel environment
-if (process.env.VERCEL !== "1") {
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
