@@ -1,5 +1,9 @@
-import { Role } from "../generated/prisma";
 import { ErrorResponse } from "./errorResponse";
+
+export enum Role {
+  Admin = "Admin",
+  User = "User",
+}
 
 export function toRole(value: string): Role {
   switch (value) {

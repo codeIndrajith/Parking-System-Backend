@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Role } from "../generated/prisma";
+import { Role } from "../utils/roleConfig";
 
 export interface Vehicle {
   id: string;
