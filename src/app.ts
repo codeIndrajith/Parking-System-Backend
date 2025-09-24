@@ -4,8 +4,6 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
-import { connectDB } from "./config/database";
-import { errorHandler } from "./middlewares/errorMiddleware";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -14,7 +12,12 @@ const PORT = process.env.PORT || 4000;
 app.use(express.json());
 
 // Enable CORS for all routes
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 // Cookie parser
 app.use(cookieParser());
@@ -39,6 +42,17 @@ app.use("/api/admin/parking", parkingRoutes);
 app.use("/api/admin/parking/blocks", parkingBlocksRoutes);
 app.use("/api/user", userParkingRoutes);
 
-app.use(errorHandler);
+// Error handler (make sure this is properly implemented)
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
+});
+
+// Only start server if not in Vercel environment
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 export default app;
