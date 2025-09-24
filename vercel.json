@@ -1,15 +1,9 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "src/index.ts",
-      "use": "@vercel/node"
+  "buildCommand": "prisma generate && npm run build",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/src/index.ts"
-    }
-  ]
+  }
 }
