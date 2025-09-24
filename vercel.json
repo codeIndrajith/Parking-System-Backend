@@ -1,9 +1,4 @@
 {
   "version": 2,
-  "buildCommand": "prisma generate && npm run build",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@2"
-    }
-  }
+  "buildCommand": "prisma generate && npm run build"
 }
