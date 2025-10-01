@@ -77,6 +77,7 @@ model Booking {
   duration      Int?  
   trackTime     Int?    
   amount        Float?   
+  bookingId     String         @unique 
   paymentStatus PaymentStatus @default(UNPAID)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

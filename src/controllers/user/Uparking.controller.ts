@@ -3,8 +3,9 @@ import asyncHandler from "../../utils/asyncHandler";
 import { ResponseFormat } from "../../types/responseFormat";
 import { IRequest } from "../../types/auth.types";
 import { ErrorResponse } from "../../utils/errorResponse";
-import { IBlockResponse } from "../../types/blocks";
 import { PrismaClient } from "@prisma/client";
+import { generateSequentialBookingId } from "../../utils/generateBookingId";
+import { sendBookingEmail } from "../../service/email.service";
 const prisma = new PrismaClient();
 // @desc    Get all parking
 // @route   GET /api/user/parkings
@@ -78,17 +79,17 @@ export const getBlock = asyncHandler(
 // @access  Private
 
 export const bookParking = asyncHandler(
-  async (
-    req: IRequest,
-    res: Response<ResponseFormat>,
-    next: NextFunction
-  ): Promise<void> => {
+  async (req: IRequest, res: Response<ResponseFormat>, next: NextFunction) => {
     const userId = req?.user?.id as string;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
     const { blockId, entryTime, exitTime, paymentStatus, date } = req.body as {
       blockId: string;
-      entryTime: string; // format: "2025-09-18T08:00:00Z"
-      exitTime: string; // format: "2025-09-18T12:00:00Z"
+      entryTime: string;
+      exitTime: string;
       paymentStatus: "PAID" | "UNPAID";
       date: string;
     };
@@ -97,25 +98,31 @@ export const bookParking = asyncHandler(
       throw new ErrorResponse("Select a block for booking", 400);
     }
 
+    let bookingId: string = "";
+
+    // ✅ Only DB work inside transaction
     await prisma.$transaction(async (tx: any) => {
       const block = await tx.block.findUnique({
         where: { id: blockId },
       });
 
-      if (!block) {
-        throw new ErrorResponse("Block not found", 404);
-      }
-
-      if (block.availableSlots <= 0) {
+      if (!block) throw new ErrorResponse("Block not found", 404);
+      if (block.availableSlots <= 0)
         throw new ErrorResponse(
           "Slots are full. Can't book at this moment",
           400
         );
-      }
 
       const start = new Date(entryTime).getTime();
       const end = new Date(exitTime).getTime();
       const timeDuration = Math.ceil((end - start) / (1000 * 60 * 60));
+
+      const lastBooking = await tx.booking.findFirst({
+        orderBy: { createdAt: "desc" },
+        select: { bookingId: true },
+      });
+
+      bookingId = generateSequentialBookingId(lastBooking?.bookingId);
 
       await tx.booking.create({
         data: {
@@ -127,20 +134,23 @@ export const bookParking = asyncHandler(
           trackTime: 0,
           entryTime,
           exitTime,
+          bookingId,
           date,
         },
       });
-      if (paymentStatus === "UNPAID") {
-        await tx.block.update({
-          where: { id: blockId },
-          data: { availableSlots: { decrement: 1 } },
-        });
-      }
-      res.status(201).json({
-        success: true,
-        statusCode: 201,
-        message: "Booking successful",
+
+      await tx.block.update({
+        where: { id: blockId },
+        data: { availableSlots: { decrement: 1 } },
       });
+    });
+
+    await sendBookingEmail(user?.email, bookingId);
+
+    res.status(201).json({
+      success: true,
+      statusCode: 201,
+      message: "Booking successful",
     });
   }
 );
@@ -171,13 +181,16 @@ export const payForBooking = asyncHandler(
           status: "PAY",
         },
       });
-
-      res.status(200).json({
-        success: true,
-        statusCode: 200,
-        message: "Booking Paid Complete",
-        data: bookingId,
+      await tx.block.update({
+        where: { id: bookingRecord?.blockId },
+        data: { availableSlots: { decrement: 1 } },
       });
+    });
+
+    res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: "Booking Paid Complete",
     });
   }
 );
@@ -187,34 +200,25 @@ export const payForBooking = asyncHandler(
 // @access  Private
 export const confirmBooking = asyncHandler(
   async (req: IRequest, res: Response<ResponseFormat>, next: NextFunction) => {
-    const { bookingId } = req.params;
+    const bookingId = req.params.bookingId;
 
     const bookingRecord = await prisma.booking.findUnique({
-      where: {
-        id: bookingId,
-      },
+      where: { bookingId: bookingId },
     });
 
     if (bookingRecord?.status === "CONFIRMED") {
       throw new ErrorResponse("Booking already confirmed", 400);
     }
 
-    await prisma.$transaction([
-      prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "CONFIRMED" },
-      }),
-      prisma.block.update({
-        where: { id: bookingRecord?.blockId },
-        data: { availableSlots: { decrement: 1 } },
-      }),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      statusCode: 200,
-      message: "Your booking confirmed. now you can parking",
-    });
+    await prisma.booking.update({
+      where: { bookingId },
+      data: { status: "CONFIRMED" },
+    }),
+      res.status(200).json({
+        success: true,
+        statusCode: 200,
+        message: "Your booking confirmed. now you can parking",
+      });
   }
 );
 
@@ -227,7 +231,7 @@ export const ccompleteBooking = asyncHandler(
 
     const bookingRecord = await prisma.booking.findUnique({
       where: {
-        id: bookingId,
+        bookingId,
       },
     });
 
@@ -235,16 +239,17 @@ export const ccompleteBooking = asyncHandler(
       throw new ErrorResponse("Booking already completed", 400);
     }
 
-    await prisma.$transaction([
-      prisma.booking.update({
-        where: { id: bookingId },
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({
+        where: { bookingId: bookingId },
         data: { status: "COMPLETED" },
-      }),
-      prisma.block.update({
+      });
+
+      await tx.block.update({
         where: { id: bookingRecord?.blockId },
         data: { availableSlots: { increment: 1 } },
-      }),
-    ]);
+      });
+    });
 
     res.status(200).json({
       success: true,
