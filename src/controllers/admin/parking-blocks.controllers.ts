@@ -27,13 +27,22 @@ export const addParkingBlocksController = asyncHandler(
       throw new ErrorResponse("Please provide blockName and totalSlots", 400);
     }
     // Add logic to save parking blocks to the database
-    await prisma.block.create({
+    const block = await prisma.block.create({
       data: {
         blockName,
         totalSlots,
         availableSlots: totalSlots,
         locationId,
       },
+    });
+
+    const slotsData = Array.from({ length: totalSlots }, (_, index) => ({
+      slotNumber: index + 1,
+      blockId: block.id,
+    }));
+
+    await prisma.slot.createMany({
+      data: slotsData,
     });
     res.status(201).json({
       success: true,
@@ -61,7 +70,7 @@ export const getParkingBlocksController = asyncHandler(
     }
     const blocks = await prisma.block.findMany({
       where: { locationId },
-      include: { parkingLocation: true },
+      include: { parkingLocation: true, slots: true },
     });
     res.status(200).json({
       success: true,
@@ -139,6 +148,3 @@ export const deleteParkingBlockController = asyncHandler(
     });
   }
 );
-
-
-    

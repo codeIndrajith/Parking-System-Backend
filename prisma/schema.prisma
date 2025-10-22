@@ -48,6 +48,17 @@ model ParkingLocation {
   blocks    Block[]
 }
 
+model Slot {
+  id         String   @id @default(uuid())
+  slotNumber Int
+  isOccupied Boolean  @default(false)
+  blockId    String
+  block      Block    @relation(fields: [blockId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  bookings            Booking[]
+}
+
 model Block {
   id                 String   @id @default(uuid())
   locationId         String
@@ -60,6 +71,7 @@ model Block {
   updatedAt          DateTime  @updatedAt
 
   bookings            Booking[]
+  slots               Slot[]
 }
 
 // Booking Records (works for both Online & Walk-in)
@@ -70,7 +82,9 @@ model Booking {
   bookingType   BookingType?
   status        BookingStatus @default(BOOK)
   blockId       String
+  slotId        String
   block         Block     @relation(fields: [blockId], references: [id])
+  slot          Slot     @relation(fields: [slotId], references: [id])
   date          String?
   entryTime     String?
   exitTime      String?

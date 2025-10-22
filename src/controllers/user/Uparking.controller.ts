@@ -6,7 +6,7 @@ import { ErrorResponse } from "../../utils/errorResponse";
 import { PrismaClient } from "@prisma/client";
 import { generateSequentialBookingId } from "../../utils/generateBookingId";
 import { sendBookingEmail } from "../../service/email.service";
-const prisma = new PrismaClient();
+const prisma: any = new PrismaClient();
 // @desc    Get all parking
 // @route   GET /api/user/parkings
 // @access  Public
@@ -26,13 +26,8 @@ export const getParkings = asyncHandler(
           where: {
             isFull: false,
           },
-          select: {
-            id: true,
-            locationId: true,
-            blockName: true,
-            totalSlots: true,
-            availableSlots: true,
-            isFull: true,
+          include: {
+            slots: true,
           },
         },
       },
@@ -56,13 +51,8 @@ export const getBlock = asyncHandler(
       where: {
         id: id,
       },
-      select: {
-        id: true,
-        blockName: true,
-        locationId: true,
-        totalSlots: true,
-        availableSlots: true,
-        isFull: true,
+      include: {
+        slots: true,
       },
     });
 
@@ -86,21 +76,21 @@ export const bookParking = asyncHandler(
       where: { id: userId },
     });
 
-    const { blockId, entryTime, exitTime, paymentStatus, date } = req.body as {
-      blockId: string;
-      entryTime: string;
-      exitTime: string;
-      paymentStatus: "PAID" | "UNPAID";
-      date: string;
-    };
+    const { blockId, slotId, entryTime, exitTime, paymentStatus, date } =
+      req.body as {
+        blockId: string;
+        slotId: string;
+        entryTime: string;
+        exitTime: string;
+        paymentStatus: "PAID" | "UNPAID";
+        date: string;
+      };
 
     if (!blockId) {
       throw new ErrorResponse("Select a block for booking", 400);
     }
 
     let bookingId: string = "";
-
-    // ✅ Only DB work inside transaction
     await prisma.$transaction(async (tx: any) => {
       const block = await tx.block.findUnique({
         where: { id: blockId },
@@ -112,6 +102,10 @@ export const bookParking = asyncHandler(
           "Slots are full. Can't book at this moment",
           400
         );
+      const slot = await tx.slot.findUnique({
+        where: { id: slotId },
+      });
+      if (slot.isOccupied) throw new ErrorResponse("Slot is booking", 400);
 
       const start = new Date(entryTime).getTime();
       const end = new Date(exitTime).getTime();
@@ -128,6 +122,7 @@ export const bookParking = asyncHandler(
         data: {
           userId,
           blockId,
+          slotId,
           paymentStatus,
           bookingType: paymentStatus === "PAID" ? "ONLINE" : "WALK_IN",
           duration: timeDuration,
@@ -137,6 +132,11 @@ export const bookParking = asyncHandler(
           bookingId,
           date,
         },
+      });
+
+      await tx.slot.update({
+        where: { id: slotId },
+        data: { isOccupied: true },
       });
 
       await tx.block.update({
@@ -181,10 +181,10 @@ export const payForBooking = asyncHandler(
           status: "PAY",
         },
       });
-      await tx.block.update({
-        where: { id: bookingRecord?.blockId },
-        data: { availableSlots: { decrement: 1 } },
-      });
+      // await tx.block.update({
+      //   where: { id: bookingRecord?.blockId },
+      //   data: { availableSlots: { decrement: 1 } },
+      // });
     });
 
     res.status(200).json({
@@ -231,7 +231,7 @@ export const ccompleteBooking = asyncHandler(
 
     const bookingRecord = await prisma.booking.findUnique({
       where: {
-        bookingId,
+        id: bookingId,
       },
     });
 
@@ -239,15 +239,19 @@ export const ccompleteBooking = asyncHandler(
       throw new ErrorResponse("Booking already completed", 400);
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.booking.update({
-        where: { bookingId: bookingId },
+        where: { id: bookingId },
         data: { status: "COMPLETED" },
       });
 
       await tx.block.update({
         where: { id: bookingRecord?.blockId },
         data: { availableSlots: { increment: 1 } },
+      });
+      await tx.slot.update({
+        where: { id: bookingRecord?.slotId },
+        data: { isOccupied: false },
       });
     });
 
@@ -283,6 +287,7 @@ export const getUserBooking = asyncHandler(
             totalSlots: true,
           },
         },
+        slot: true,
       },
     });
 
