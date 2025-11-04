@@ -13,7 +13,7 @@ model User {
   name          String
   email         String    @unique
   password      String
-  role          Role      @default(User)
+  role          Role      
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -102,7 +102,10 @@ model Booking {
 
 enum Role {
   Admin
-  User
+  Student
+  CivilStaff
+  AcademicStaff
+  MilitaryStaff
 }
 
 enum BookingType {
