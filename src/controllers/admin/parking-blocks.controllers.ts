@@ -22,7 +22,7 @@ export const addParkingBlocksController = asyncHandler(
     if (!location) {
       throw new ErrorResponse("Parking location not found", 404);
     }
-    const { blockName, totalSlots } = req.body;
+    const { blockName, totalSlots, vehicleType } = req.body;
     if (!blockName || !totalSlots) {
       throw new ErrorResponse("Please provide blockName and totalSlots", 400);
     }
@@ -31,6 +31,7 @@ export const addParkingBlocksController = asyncHandler(
       data: {
         blockName,
         totalSlots,
+        vehicleType,
         availableSlots: totalSlots,
         locationId,
       },
@@ -96,7 +97,7 @@ export const updateParkingBlockController = asyncHandler(
     if (!block) {
       throw new ErrorResponse("Parking block not found", 404);
     }
-    const { blockName, totalSlots } = req.body;
+    const { blockName, totalSlots, vehicleType } = req.body;
     if (!blockName && !totalSlots) {
       throw new ErrorResponse(
         "Please provide blockName or totalSlots to update",
@@ -105,12 +106,13 @@ export const updateParkingBlockController = asyncHandler(
     }
     const updatedData: any = {};
     if (blockName) updatedData.blockName = blockName;
+    if (vehicleType) updatedData.vehicleType = vehicleType;
     if (totalSlots) {
       updatedData.totalSlots = totalSlots;
       // Adjust available slots accordingly
       const slotDifference = totalSlots - block.totalSlots;
       updatedData.availableSlots = block.availableSlots + slotDifference;
-      if (updatedData.availableSlots < 0) updatedData.availableSlots = 0; // Prevent negative available slots
+      if (updatedData.availableSlots < 0) updatedData.availableSlots = 0;
     }
     await prisma.block.update({
       where: { id: blockId },

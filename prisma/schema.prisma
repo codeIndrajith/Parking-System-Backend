@@ -64,6 +64,7 @@ model Block {
   locationId         String
   parkingLocation    ParkingLocation @relation(fields: [locationId], references: [id])
   blockName          String
+  vehicleType        String
   totalSlots         Int
   availableSlots     Int
   isFull             Boolean   @default(false) 
