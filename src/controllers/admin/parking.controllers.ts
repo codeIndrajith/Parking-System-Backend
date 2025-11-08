@@ -19,7 +19,16 @@ export const addParkingLocationController = asyncHandler(
     if (!name || !address) {
       throw new ErrorResponse("Please provide name and address", 400);
     }
-    // Add logic to save parking location to the database
+
+    const existingLocation = await prisma.parkingLocation.findFirst();
+
+    if (existingLocation) {
+      throw new ErrorResponse(
+        "A parking location already exists. Only one parking location is allowed.",
+        400
+      );
+    }
+
     await prisma.parkingLocation.create({
       data: {
         name,
