@@ -222,49 +222,8 @@ export const confirmBooking = asyncHandler(
   }
 );
 
-// @desc    Complete for Online Booking
-// @route   PUT /api/user/parkings/complete/:bookingId
-// @access  Private
-export const ccompleteBooking = asyncHandler(
-  async (req: IRequest, res: Response<ResponseFormat>, next: NextFunction) => {
-    const { bookingId } = req.params;
-
-    const bookingRecord = await prisma.booking.findUnique({
-      where: {
-        id: bookingId,
-      },
-    });
-
-    if (bookingRecord?.status === "COMPLETED") {
-      throw new ErrorResponse("Booking already completed", 400);
-    }
-
-    await prisma.$transaction(async (tx: any) => {
-      await tx.booking.update({
-        where: { id: bookingId },
-        data: { status: "COMPLETED" },
-      });
-
-      await tx.block.update({
-        where: { id: bookingRecord?.blockId },
-        data: { availableSlots: { increment: 1 } },
-      });
-      await tx.slot.update({
-        where: { id: bookingRecord?.slotId },
-        data: { isOccupied: false },
-      });
-    });
-
-    res.status(200).json({
-      success: true,
-      statusCode: 200,
-      message: "Your booking is complete. Thank for your parking",
-    });
-  }
-);
-
 // @desc    Get User Booking
-// @route   GET /api/user/parkings/:bookingId
+// @route   GET /api/user/parkings
 // @access  Private
 export const getUserBooking = asyncHandler(
   async (
