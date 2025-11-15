@@ -114,10 +114,48 @@ export const bookParking = asyncHandler(
       const slot = await tx.slot.findUnique({
         where: { id: slotId },
       });
-      if (slot.isOccupied) throw new ErrorResponse("Slot is booking", 400);
+
+      if (!slot) throw new ErrorResponse("Slot not found", 404);
+      if (slot.isOccupied)
+        throw new ErrorResponse("Slot is already occupied", 400);
+
+      const existingBooking = await tx.booking.findFirst({
+        where: {
+          slotId,
+          date: date,
+          OR: [
+            // New booking starts during existing booking
+            {
+              entryTime: { lte: entryTime },
+              exitTime: { gte: entryTime },
+            },
+            // New booking ends during existing booking
+            {
+              entryTime: { lte: exitTime },
+              exitTime: { gte: exitTime },
+            },
+            // New booking completely contains existing booking
+            {
+              entryTime: { gte: entryTime },
+              exitTime: { lte: exitTime },
+            },
+          ],
+        },
+      });
+
+      if (existingBooking) {
+        throw new ErrorResponse(
+          "Slot is already booked for the selected date and time",
+          400
+        );
+      }
 
       const start = new Date(entryTime).getTime();
       const end = new Date(exitTime).getTime();
+
+      if (end <= start) {
+        throw new ErrorResponse("Exit time must be after entry time", 400);
+      }
       const timeDuration = Math.ceil((end - start) / (1000 * 60 * 60));
 
       const lastBooking = await tx.booking.findFirst({
