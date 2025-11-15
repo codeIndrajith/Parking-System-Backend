@@ -76,21 +76,30 @@ export const bookParking = asyncHandler(
       where: { id: userId },
     });
 
-    const { blockId, slotId, entryTime, exitTime, paymentStatus, date } =
-      req.body as {
-        blockId: string;
-        slotId: string;
-        entryTime: string;
-        exitTime: string;
-        paymentStatus: "PAID" | "UNPAID";
-        date: string;
-      };
+    const {
+      blockId,
+      slotId,
+      entryTime,
+      exitTime,
+      paymentStatus,
+      date,
+      amount,
+    } = req.body as {
+      blockId: string;
+      slotId: string;
+      entryTime: string;
+      exitTime: string;
+      paymentStatus: "PAID" | "UNPAID";
+      date: string;
+      amount: number;
+    };
 
     if (!blockId) {
       throw new ErrorResponse("Select a block for booking", 400);
     }
 
     let bookingId: string = "";
+    let newBooking;
     await prisma.$transaction(async (tx: any) => {
       const block = await tx.block.findUnique({
         where: { id: blockId },
@@ -118,7 +127,7 @@ export const bookParking = asyncHandler(
 
       bookingId = generateSequentialBookingId(lastBooking?.bookingId);
 
-      await tx.booking.create({
+      newBooking = await tx.booking.create({
         data: {
           userId,
           blockId,
@@ -130,6 +139,7 @@ export const bookParking = asyncHandler(
           entryTime,
           exitTime,
           bookingId,
+          amount,
           date,
         },
       });
@@ -151,6 +161,7 @@ export const bookParking = asyncHandler(
       success: true,
       statusCode: 201,
       message: "Booking successful",
+      data: newBooking,
     });
   }
 );

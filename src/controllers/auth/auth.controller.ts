@@ -27,7 +27,10 @@ export const authController = asyncHandler(
         password: hashedPassword,
         role,
         vehicles:
-          role === "User" && Array.isArray(vehicles)
+          role === "Student" ||
+          role === "CivilStaff" ||
+          role === "AcademicStaff" ||
+          (role === "MilitaryStaff" && Array.isArray(vehicles))
             ? {
                 create: vehicles.map((v: any) => ({
                   plateNo: v.plateNo,
