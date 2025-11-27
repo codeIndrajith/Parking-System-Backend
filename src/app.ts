@@ -30,12 +30,14 @@ import authRoutes from "./routes/auth/auth.route";
 import parkingRoutes from "./routes/admin/parking.routes";
 import parkingBlocksRoutes from "./routes/admin/parking-blocks.routes";
 import userParkingRoutes from "./routes/user/Uparking.routes";
+import adminDashboardRoutes from "./routes/admin/dashboard.routes";
 
 // Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/parking", parkingRoutes);
 app.use("/api/admin/parking/blocks", parkingBlocksRoutes);
 app.use("/api/user", userParkingRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 app.use(errorHandler);
 
