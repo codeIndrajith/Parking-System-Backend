@@ -121,3 +121,35 @@ export const getUserParkTrackDetails = asyncHandler(
     });
   }
 );
+
+// @desc     Get all users
+// @route    GET /api/admin/dashboard/users
+// @access   Private (Admin)
+
+export const getAllUsers = asyncHandler(
+  async (
+    req: IRequest,
+    res: Response<ResponseFormat>,
+    newt: NextFunction
+  ): Promise<void> => {
+    const allUsers = await prisma.user.findMany({
+      where: {
+        role: {
+          in: ["Student", "CivilStaff", "AcademicStaff", "MilitaryStaff"],
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res
+      .status(200)
+      .json({ success: true, statusCode: 200, data: allUsers ?? [] });
+  }
+);
