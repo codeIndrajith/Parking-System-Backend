@@ -14,7 +14,7 @@ export const getUserParkTrackDetails = asyncHandler(
   async (
     req: IRequest,
     res: Response<ResponseFormat>,
-    newt: NextFunction
+    next: NextFunction
   ): Promise<void> => {
     const {
       page = 1,
@@ -43,11 +43,7 @@ export const getUserParkTrackDetails = asyncHandler(
         where,
         include: {
           user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+            select: { id: true, name: true, email: true },
           },
           block: {
             select: {
@@ -60,16 +56,10 @@ export const getUserParkTrackDetails = asyncHandler(
             },
           },
           slot: {
-            select: {
-              id: true,
-              isOccupied: true,
-              slotNumber: true,
-            },
+            select: { id: true, isOccupied: true, slotNumber: true },
           },
         },
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limitNum,
       }),
@@ -77,25 +67,34 @@ export const getUserParkTrackDetails = asyncHandler(
     ]);
 
     const [totalStats, statusStats, paymentStats] = await Promise.all([
-      // Overall statistics
       prisma.booking.aggregate({
         _count: { id: true },
         _sum: { amount: true, duration: true },
       }),
 
-      // Bookings by status
       prisma.booking.groupBy({
         by: ["status"],
         _count: { id: true },
       }),
 
-      // Payment status statistics
       prisma.booking.groupBy({
         by: ["paymentStatus"],
         _count: { id: true },
         _sum: { amount: true },
       }),
     ]);
+
+    // 🔥 Remove underscores from final API response
+    const formattedStatusStats = statusStats.map((s: any) => ({
+      status: s.status,
+      count: s._count.id,
+    }));
+
+    const formattedPaymentStats = paymentStats.map((p: any) => ({
+      paymentStatus: p.paymentStatus,
+      count: p._count.id,
+      revenue: p._sum.amount ?? 0,
+    }));
 
     res.status(200).json({
       success: true,
@@ -111,11 +110,11 @@ export const getUserParkTrackDetails = asyncHandler(
         statistics: {
           total: {
             bookings: totalStats._count.id,
-            revenue: totalStats._sum.amount,
-            totalDuration: totalStats._sum.duration,
+            revenue: totalStats._sum.amount ?? 0,
+            totalDuration: totalStats._sum.duration ?? 0,
           },
-          byStatus: statusStats,
-          byPaymentStatus: paymentStats,
+          byStatus: formattedStatusStats,
+          byPaymentStatus: formattedPaymentStats,
         },
       },
     });
